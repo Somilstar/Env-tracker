@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
         const snapshotFile = path.join(snapshotFolder, `${timestamp}.env`);
         fs.writeFileSync(snapshotFile, content);
 
-        // Ensure .gitignore exists for this folder
+        // Ensure .gitignore exists for this folder and ignore both .envtracker and .env
         ensureGitignore(envFolder);
 
         vscode.window.showInformationMessage(`Env Tracker: Snapshot saved (${relativePath})`);
@@ -55,24 +55,26 @@ export function activate(context: vscode.ExtensionContext) {
 
 function ensureGitignore(folderPath: string) {
     const gitignorePath = path.join(folderPath, '.gitignore');
-    const entry = '.envtracker/';
+    const entries = ['.envtracker/', '.env']; // ignore snapshots and main env
     let modified = false;
 
     try {
         if (fs.existsSync(gitignorePath)) {
             const content = fs.readFileSync(gitignorePath, 'utf8');
-            if (!content.includes(entry)) {
-                fs.appendFileSync(gitignorePath, `\n${entry}\n`);
-                modified = true;
+            for (const entry of entries) {
+                if (!content.includes(entry)) {
+                    fs.appendFileSync(gitignorePath, `\n${entry}`);
+                    modified = true;
+                }
             }
         } else {
-            fs.writeFileSync(gitignorePath, `${entry}\n`);
+            fs.writeFileSync(gitignorePath, entries.join('\n') + '\n');
             modified = true;
         }
 
         if (modified) {
             vscode.window.showInformationMessage(
-                `Env Tracker: Added '.envtracker/' to ${folderPath}/.gitignore to prevent snapshots from being committed.`
+                `Env Tracker: Added '.envtracker/' and '.env' to ${folderPath}/.gitignore to prevent sensitive files from being committed.`
             );
         }
     } catch (error) {
