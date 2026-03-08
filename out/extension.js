@@ -47,35 +47,43 @@ function activate(context) {
     if (!workspaceFolder)
         return;
     const workspacePath = workspaceFolder.uri.fsPath;
-    // Ensure .envtracker is ignored by git
-    ensureGitignore(workspacePath);
-    const envPath = path.join(workspacePath, '.env');
-    const trackerFolder = path.join(workspacePath, '.envtracker');
-    const snapshotFolder = path.join(trackerFolder, 'snapshots');
-    // Create folders if they don't exist
-    if (!fs.existsSync(trackerFolder))
-        fs.mkdirSync(trackerFolder);
-    if (!fs.existsSync(snapshotFolder))
-        fs.mkdirSync(snapshotFolder);
-    // Watch .env for changes
-    const watcher = chokidar_1.default.watch(envPath, { persistent: true, ignoreInitial: true });
-    watcher.on('change', () => {
-        if (!fs.existsSync(envPath))
+    // Watch all .env files recursively
+    const watcher = chokidar_1.default.watch('**/.env', {
+        cwd: workspacePath,
+        persistent: true,
+        ignoreInitial: true
+    });
+    watcher.on('change', (relativePath) => {
+        const envFullPath = path.join(workspacePath, relativePath);
+        if (!fs.existsSync(envFullPath))
             return;
-        const content = fs.readFileSync(envPath, 'utf8');
+        const content = fs.readFileSync(envFullPath, 'utf8');
         const now = new Date();
         const timestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}_` +
             `${now.getHours().toString().padStart(2, '0')}-${now.getMinutes().toString().padStart(2, '0')}-${now.getSeconds().toString().padStart(2, '0')}`;
+        // Folder containing this .env file
+        const envFolder = path.dirname(envFullPath);
+        // Each folder has its own .envtracker
+        const trackerFolder = path.join(envFolder, '.envtracker');
+        const snapshotFolder = path.join(trackerFolder, 'snapshots');
+        if (!fs.existsSync(trackerFolder))
+            fs.mkdirSync(trackerFolder);
+        if (!fs.existsSync(snapshotFolder))
+            fs.mkdirSync(snapshotFolder);
+        // Save snapshot
         const snapshotFile = path.join(snapshotFolder, `${timestamp}.env`);
         fs.writeFileSync(snapshotFile, content);
-        vscode.window.showInformationMessage(`Env Tracker: Snapshot saved (${timestamp})`);
+        // Ensure .gitignore exists for this folder
+        ensureGitignore(envFolder);
+        vscode.window.showInformationMessage(`Env Tracker: Snapshot saved (${relativePath})`);
     });
     context.subscriptions.push({
         dispose: () => watcher.close()
     });
+    vscode.window.showInformationMessage('Env Tracker Activated ✅ Watching all .env files');
 }
-function ensureGitignore(workspacePath) {
-    const gitignorePath = path.join(workspacePath, '.gitignore');
+function ensureGitignore(folderPath) {
+    const gitignorePath = path.join(folderPath, '.gitignore');
     const entry = '.envtracker/';
     let modified = false;
     try {
@@ -91,7 +99,7 @@ function ensureGitignore(workspacePath) {
             modified = true;
         }
         if (modified) {
-            vscode.window.showInformationMessage("Env Tracker added '.envtracker/' to your .gitignore to prevent snapshot files from being committed.");
+            vscode.window.showInformationMessage(`Env Tracker: Added '.envtracker/' to ${folderPath}/.gitignore to prevent snapshots from being committed.`);
         }
     }
     catch (error) {
