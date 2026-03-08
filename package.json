@@ -2,7 +2,7 @@
   "name": "env-tracker",
   "displayName": "Env Tracker",
   "description": "Automatically track .env file changes and save timestamped snapshots locally.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "icon": "icon.png",
   "publisher": "devsomil",
   "engines": {
@@ -12,7 +12,7 @@
     "Other"
   ],
   "activationEvents": [
-    "workspaceContains:.env"
+    "*"
   ],
   "main": "./out/extension.js",
   "scripts": {
