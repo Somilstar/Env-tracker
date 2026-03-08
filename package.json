@@ -1,0 +1,37 @@
+{
+  "name": "env-tracker",
+  "displayName": "Env Tracker",
+  "description": "Automatically track .env file changes and save timestamped snapshots locally.",
+  "version": "1.0.2",
+  "icon": "icon.png",
+  "publisher": "devsomil",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:.env"
+  ],
+  "main": "./out/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/node": "22.x",
+    "@types/vscode": "^1.80.0",
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0"
+  }
+}

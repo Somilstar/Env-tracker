@@ -1,0 +1,6 @@
+*.vsix
+.envtracker/
+node_modules/
+dist/
+*.log
+*.tmp
